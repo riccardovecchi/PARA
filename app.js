@@ -44,6 +44,7 @@ const elements = {
 
 // Inizializzazione app
 function init() {
+    console.log('🚀 Inizializzazione PARA Notes...');
     loadNotes();
     attachEventListeners();
 }
@@ -59,10 +60,13 @@ function attachEventListeners() {
     elements.searchInput.addEventListener('input', debounce(handleSearch, 300));
 
     // Nuova nota
-    elements.newNoteBtn.addEventListener('click', createNewNote);
+    elements.newNoteBtn.addEventListener('click', () => {
+        console.log('🆕 Click su Nuova Nota');
+        createNewNote();
+    });
 
     // Editor
-    elements.saveNoteBtn.addEventListener('click', saveCurrentNote);
+    elements.saveNoteBtn.addEventListener('click', () => saveCurrentNote(false));
     elements.deleteNoteBtn.addEventListener('click', deleteCurrentNote);
     elements.closeEditorBtn.addEventListener('click', closeEditor);
 
@@ -92,14 +96,22 @@ function attachEventListeners() {
 // Carica tutte le note dal server
 async function loadNotes() {
     try {
+        console.log('📥 Caricamento note...');
         const response = await fetch(`${API_BASE}/notes`);
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
         const data = await response.json();
         appState.notes = data.notes || [];
+        console.log(`✅ Caricate ${appState.notes.length} note`);
+
         renderNotesList();
         updateCategoryCounts();
     } catch (error) {
-        console.error('Errore nel caricamento delle note:', error);
-        showNotification('Errore nel caricamento delle note', 'error');
+        console.error('❌ Errore nel caricamento delle note:', error);
+        showNotification('Errore nel caricamento delle note. Verifica che il server sia avviato.', 'error');
     }
 }
 
@@ -118,6 +130,8 @@ function handleCategoryClick(item) {
     const categoryName = item.querySelector('span:nth-child(2)').textContent;
     elements.currentCategoryTitle.textContent = categoryName;
 
+    console.log(`📁 Categoria selezionata: ${appState.currentCategory}`);
+
     // Renderizza lista
     renderNotesList();
 }
@@ -127,14 +141,17 @@ async function handleSearch(e) {
     const query = e.target.value.trim();
     appState.searchQuery = query;
 
+    console.log(`🔍 Ricerca: "${query}"`);
+
     if (query) {
         try {
             const response = await fetch(`${API_BASE}/search?q=${encodeURIComponent(query)}`);
             const results = await response.json();
             appState.notes = results;
             elements.currentCategoryTitle.textContent = `Risultati per "${query}"`;
+            console.log(`✅ Trovati ${results.length} risultati`);
         } catch (error) {
-            console.error('Errore nella ricerca:', error);
+            console.error('❌ Errore nella ricerca:', error);
         }
     } else {
         await loadNotes();
@@ -145,6 +162,8 @@ async function handleSearch(e) {
 
 // Crea nuova nota
 async function createNewNote() {
+    console.log('📝 Creazione nuova nota...');
+
     const newNote = {
         title: 'Nuova Nota',
         content: '',
@@ -152,14 +171,27 @@ async function createNewNote() {
         tags: []
     };
 
+    console.log('📤 Invio richiesta POST:', newNote);
+
     try {
         const response = await fetch(`${API_BASE}/notes`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
             body: JSON.stringify(newNote)
         });
 
+        console.log('📡 Risposta ricevuta:', response.status);
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
         const createdNote = await response.json();
+        console.log('✅ Nota creata:', createdNote);
+
         appState.notes.unshift(createdNote);
         appState.currentNote = createdNote;
 
@@ -168,19 +200,24 @@ async function createNewNote() {
         updateCategoryCounts();
 
         // Focus sul titolo
-        elements.noteTitle.focus();
-        elements.noteTitle.select();
+        setTimeout(() => {
+            elements.noteTitle.focus();
+            elements.noteTitle.select();
+        }, 100);
 
         showNotification('Nota creata con successo', 'success');
     } catch (error) {
-        console.error('Errore nella creazione della nota:', error);
-        showNotification('Errore nella creazione della nota', 'error');
+        console.error('❌ Errore nella creazione della nota:', error);
+        showNotification('Errore nella creazione della nota. Verifica che il server sia avviato.', 'error');
     }
 }
 
 // Salva nota corrente
 async function saveCurrentNote(isAutoSave = false) {
-    if (!appState.currentNote) return;
+    if (!appState.currentNote) {
+        console.warn('⚠️ Nessuna nota da salvare');
+        return;
+    }
 
     const updatedNote = {
         title: elements.noteTitle.value || 'Senza titolo',
@@ -189,6 +226,8 @@ async function saveCurrentNote(isAutoSave = false) {
         tags: getCurrentTags()
     };
 
+    console.log(`💾 Salvataggio nota ${appState.currentNote.id}...`);
+
     try {
         const response = await fetch(`${API_BASE}/notes/${appState.currentNote.id}`, {
             method: 'PUT',
@@ -196,7 +235,12 @@ async function saveCurrentNote(isAutoSave = false) {
             body: JSON.stringify(updatedNote)
         });
 
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
         const savedNote = await response.json();
+        console.log('✅ Nota salvata');
 
         // Aggiorna state
         const index = appState.notes.findIndex(n => n.id === savedNote.id);
@@ -216,7 +260,7 @@ async function saveCurrentNote(isAutoSave = false) {
             showNotification('Nota salvata', 'success');
         }
     } catch (error) {
-        console.error('Errore nel salvataggio della nota:', error);
+        console.error('❌ Errore nel salvataggio della nota:', error);
         showNotification('Errore nel salvataggio', 'error');
     }
 }
@@ -227,10 +271,18 @@ async function deleteCurrentNote() {
 
     if (!confirm('Sei sicuro di voler eliminare questa nota?')) return;
 
+    console.log(`🗑️ Eliminazione nota ${appState.currentNote.id}...`);
+
     try {
-        await fetch(`${API_BASE}/notes/${appState.currentNote.id}`, {
+        const response = await fetch(`${API_BASE}/notes/${appState.currentNote.id}`, {
             method: 'DELETE'
         });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        console.log('✅ Nota eliminata');
 
         // Rimuovi dallo state
         appState.notes = appState.notes.filter(n => n.id !== appState.currentNote.id);
@@ -242,13 +294,14 @@ async function deleteCurrentNote() {
 
         showNotification('Nota eliminata', 'success');
     } catch (error) {
-        console.error('Errore nell\'eliminazione della nota:', error);
+        console.error('❌ Errore nell\'eliminazione della nota:', error);
         showNotification('Errore nell\'eliminazione', 'error');
     }
 }
 
 // Apri editor con nota
 function openEditor(note) {
+    console.log(`📖 Apertura nota: ${note.title}`);
     appState.currentNote = note;
 
     // Popola campi
@@ -275,6 +328,7 @@ function openEditor(note) {
 
 // Chiudi editor
 function closeEditor() {
+    console.log('❌ Chiusura editor');
     appState.currentNote = null;
     elements.noteEditor.classList.remove('active');
     elements.notePlaceholder.classList.remove('hidden');
@@ -310,9 +364,9 @@ function getCurrentTags() {
 // Renderizza tag
 function renderTags(tags) {
     elements.tagsDisplay.innerHTML = tags.map(tag => `
-        <span class="tag-item" data-tag="${tag}">
-            ${tag}
-            <span class="tag-remove" onclick="removeTag('${tag}')">×</span>
+        <span class="tag-item" data-tag="${escapeHtml(tag)}">
+            ${escapeHtml(tag)}
+            <span class="tag-remove" onclick="removeTag('${escapeHtml(tag)}')">×</span>
         </span>
     `).join('');
 }
@@ -336,6 +390,8 @@ function renderNotesList() {
 
     // Ordina
     filteredNotes = sortNotes(filteredNotes, appState.sortBy);
+
+    console.log(`📋 Rendering ${filteredNotes.length} note`);
 
     // Mostra empty state se necessario
     if (filteredNotes.length === 0) {
@@ -467,9 +523,15 @@ function debounce(func, wait) {
 }
 
 function showNotification(message, type = 'info') {
-    // Implementazione semplice con console, può essere estesa con toast UI
     console.log(`[${type.toUpperCase()}] ${message}`);
+    // Puoi aggiungere qui un sistema di notifiche toast se vuoi
 }
 
-// Avvia l'applicazione
-init();
+// Avvia l'applicazione quando il DOM è pronto
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+} else {
+    init();
+}
+
+console.log('✅ Script caricato');
