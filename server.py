@@ -11,8 +11,8 @@ import os
 from datetime import datetime
 import uuid
 
-app = Flask(__name__)
-CORS(app)
+app = Flask(__name__, static_folder='.')
+CORS(app, resources={r"/*": {"origins": "*"}})
 
 # File di persistenza
 DATA_FILE = 'notes_data.json'
@@ -58,6 +58,7 @@ def serve_static(path):
 def get_notes():
     """Recupera tutte le note"""
     data = load_data()
+    print(f"GET /api/notes - Ritorno {len(data['notes'])} note")
     return jsonify(data)
 
 @app.route('/api/notes', methods=['POST'])
@@ -65,6 +66,8 @@ def create_note():
     """Crea una nuova nota"""
     data = load_data()
     note_data = request.json
+
+    print(f"POST /api/notes - Ricevuto: {note_data}")
 
     # Crea nuova nota con ID univoco e timestamp
     new_note = {
@@ -80,6 +83,7 @@ def create_note():
     data['notes'].append(new_note)
 
     if save_data(data):
+        print(f"Nota creata con successo: {new_note['id']}")
         return jsonify(new_note), 201
     else:
         return jsonify({'error': 'Errore nel salvare la nota'}), 500
@@ -89,6 +93,8 @@ def update_note(note_id):
     """Aggiorna una nota esistente"""
     data = load_data()
     note_data = request.json
+
+    print(f"PUT /api/notes/{note_id} - Ricevuto: {note_data}")
 
     # Trova e aggiorna la nota
     for i, note in enumerate(data['notes']):
@@ -102,6 +108,7 @@ def update_note(note_id):
             })
 
             if save_data(data):
+                print(f"Nota aggiornata: {note_id}")
                 return jsonify(data['notes'][i])
             else:
                 return jsonify({'error': 'Errore nel salvare la nota'}), 500
@@ -113,12 +120,15 @@ def delete_note(note_id):
     """Elimina una nota"""
     data = load_data()
 
+    print(f"DELETE /api/notes/{note_id}")
+
     # Filtra la nota da eliminare
     original_length = len(data['notes'])
     data['notes'] = [note for note in data['notes'] if note['id'] != note_id]
 
     if len(data['notes']) < original_length:
         if save_data(data):
+            print(f"Nota eliminata: {note_id}")
             return jsonify({'message': 'Nota eliminata con successo'})
         else:
             return jsonify({'error': 'Errore nel salvare i dati'}), 500
@@ -129,6 +139,8 @@ def delete_note(note_id):
 def search_notes():
     """Cerca nelle note per titolo, contenuto e tag"""
     query = request.args.get('q', '').lower()
+
+    print(f"GET /api/search?q={query}")
 
     if not query:
         return jsonify([])
@@ -143,9 +155,13 @@ def search_notes():
             any(query in tag.lower() for tag in note['tags'])):
             results.append(note)
 
+    print(f"Trovati {len(results)} risultati")
     return jsonify(results)
 
 if __name__ == '__main__':
-    print("🚀 Server avviato su http://localhost:5000")
+    print("=" * 60)
+    print("🚀 Server PARA Notes avviato")
+    print("📍 URL: http://localhost:5000")
     print("📝 Webapp di notetaking con metodo PARA")
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    print("=" * 60)
+    app.run(host='0.0.0.0', port=5000, debug=True, use_reloader=True)
