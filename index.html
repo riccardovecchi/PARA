@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PARA Notes - Sistema di Notetaking Personale</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar con categorie PARA -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h1>📝 PARA Notes</h1>
+            </div>
+
+            <div class="search-container">
+                <input type="text" id="searchInput" placeholder="🔍 Cerca ovunque..." class="search-input">
+            </div>
+
+            <nav class="categories">
+                <h2>Categorie PARA</h2>
+                <ul id="categoryList">
+                    <li data-category="all" class="category-item active">
+                        <span class="category-icon">📚</span>
+                        <span>Tutte le Note</span>
+                        <span class="count" id="count-all">0</span>
+                    </li>
+                    <li data-category="Progetti" class="category-item">
+                        <span class="category-icon">🎯</span>
+                        <span>Progetti</span>
+                        <span class="count" id="count-progetti">0</span>
+                    </li>
+                    <li data-category="Aree" class="category-item">
+                        <span class="category-icon">🏠</span>
+                        <span>Aree</span>
+                        <span class="count" id="count-aree">0</span>
+                    </li>
+                    <li data-category="Risorse" class="category-item">
+                        <span class="category-icon">💡</span>
+                        <span>Risorse</span>
+                        <span class="count" id="count-risorse">0</span>
+                    </li>
+                    <li data-category="Archivi" class="category-item">
+                        <span class="category-icon">📦</span>
+                        <span>Archivi</span>
+                        <span class="count" id="count-archivi">0</span>
+                    </li>
+                </ul>
+            </nav>
+
+            <button id="newNoteBtn" class="new-note-btn">+ Nuova Nota</button>
+        </aside>
+
+        <!-- Lista note -->
+        <main class="notes-list">
+            <div class="notes-list-header">
+                <h2 id="currentCategoryTitle">Tutte le Note</h2>
+                <div class="sort-options">
+                    <select id="sortSelect">
+                        <option value="updated">Ultima modifica</option>
+                        <option value="created">Data creazione</option>
+                        <option value="title">Titolo</option>
+                    </select>
+                </div>
+            </div>
+
+            <div id="notesList" class="notes-grid">
+                <!-- Le note verranno inserite qui dinamicamente -->
+            </div>
+
+            <div id="emptyState" class="empty-state">
+                <div class="empty-icon">📝</div>
+                <h3>Nessuna nota trovata</h3>
+                <p>Crea la tua prima nota per iniziare!</p>
+            </div>
+        </main>
+
+        <!-- Editor nota -->
+        <section class="note-editor" id="noteEditor">
+            <div class="editor-header">
+                <input type="text" id="noteTitle" placeholder="Titolo della nota..." class="note-title-input">
+                <div class="editor-actions">
+                    <button id="deleteNoteBtn" class="btn-icon" title="Elimina nota">
+                        <span>🗑️</span>
+                    </button>
+                    <button id="closeEditorBtn" class="btn-icon" title="Chiudi">
+                        <span>✕</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="editor-meta">
+                <div class="meta-group">
+                    <label for="noteCategory">Categoria:</label>
+                    <select id="noteCategory" class="category-select">
+                        <option value="Progetti">🎯 Progetti</option>
+                        <option value="Aree">🏠 Aree</option>
+                        <option value="Risorse">💡 Risorse</option>
+                        <option value="Archivi">📦 Archivi</option>
+                    </select>
+                </div>
+
+                <div class="meta-group">
+                    <label for="noteTags">Tag:</label>
+                    <div class="tags-input-container">
+                        <div id="tagsDisplay" class="tags-display"></div>
+                        <input type="text" id="noteTags" placeholder="Aggiungi tag (premi Invio)" class="tags-input">
+                    </div>
+                </div>
+            </div>
+
+            <textarea id="noteContent" placeholder="Inizia a scrivere..." class="note-content-input"></textarea>
+
+            <div class="editor-footer">
+                <span id="lastSaved" class="last-saved"></span>
+                <button id="saveNoteBtn" class="save-btn">💾 Salva</button>
+            </div>
+        </section>
+
+        <!-- Placeholder quando nessuna nota è selezionata -->
+        <section class="note-placeholder" id="notePlaceholder">
+            <div class="placeholder-content">
+                <div class="placeholder-icon">✨</div>
+                <h2>Benvenuto in PARA Notes</h2>
+                <p>Seleziona una nota dalla lista o creane una nuova per iniziare</p>
+                <div class="para-info">
+                    <h3>Il Metodo PARA</h3>
+                    <ul>
+                        <li><strong>🎯 Progetti:</strong> Obiettivi a breve termine con scadenza</li>
+                        <li><strong>🏠 Aree:</strong> Responsabilità a lungo termine</li>
+                        <li><strong>💡 Risorse:</strong> Argomenti di interesse</li>
+                        <li><strong>📦 Archivi:</strong> Elementi completati o inattivi</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
